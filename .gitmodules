@@ -1,0 +1,16 @@
+[submodule "modules/local/chopper"]
+	path = modules/local/chopper
+	url = https://github.com/chusj-pigu/wf-modules
+	branch = chopper
+[submodule "modules/local/minimap2"]
+	path = modules/local/minimap2
+	url = https://github.com/chusj-pigu/wf-modules
+	branch = minimap2
+[submodule "modules/local/samtools"]
+	path = modules/local/samtools
+	url = https://github.com/chusj-pigu/wf-modules
+	branch = samtools
+[submodule "modules/local/ichorcna"]
+	path = modules/local/ichorcna
+	url = https://github.com/chusj-pigu/wf-modules
+	branch = ichorcna

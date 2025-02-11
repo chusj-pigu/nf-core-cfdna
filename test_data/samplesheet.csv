@@ -1,0 +1,3 @@
+sample,fastq,purity
+161436_SISJ0281_ctDNA_Nano_NEU_45946,/workspaces/nf-core-cfdna/test_data/reads/161436_SISJ0281_ctDNA_Nano_NEU_45946_subsampled.fq.gz,0.84
+163135_SISJ0316_ctDNA_Nano_NEU_46239,/workspaces/nf-core-cfdna/test_data/reads/163135_SISJ0316_ctDNA_Nano_NEU_46239_subsampled.fq.gz,0.80

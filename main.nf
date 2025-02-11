@@ -15,9 +15,10 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { CFDNA  } from './workflows/cfdna'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_cfdna_pipeline'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_cfdna_pipeline'
+include { CFDNA                           } from './workflows/cfdna'
+include { PIPELINE_INITIALISATION         } from './subworkflows/local/utils_nfcore_cfdna_pipeline'
+include { PIPELINE_COMPLETION             } from './subworkflows/local/utils_nfcore_cfdna_pipeline'
+include { INITIALISATION_CHANNEL_CREATION } from './subworkflows/local/utils_nfcore_cfdna_pipeline'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
@@ -30,7 +31,11 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_cfdn
 workflow NFCORE_CFDNA {
 
     take:
-    samplesheet // channel: samplesheet read in from --input
+    samplesheet_red // channel: samplesheet read in from --input
+    max_length
+    qual
+    ref
+    samplesheet_purity
 
     main:
 
@@ -38,7 +43,11 @@ workflow NFCORE_CFDNA {
     // WORKFLOW: Run pipeline
     //
     CFDNA (
-        samplesheet
+        samplesheet_red,
+        max_length,
+        qual,
+        ref,
+        samplesheet_purity
     )
 }
 /*
@@ -62,11 +71,17 @@ workflow {
         params.input
     )
 
+    INITIALISATION_CHANNEL_CREATION()
     //
     // WORKFLOW: Run main workflow
     //
+
     NFCORE_CFDNA (
-        PIPELINE_INITIALISATION.out.samplesheet
+        PIPELINE_INITIALISATION.out.fastq,
+        INITIALISATION_CHANNEL_CREATION.out.max_len,
+        INITIALISATION_CHANNEL_CREATION.out.min_qual,
+        INITIALISATION_CHANNEL_CREATION.out.ref,
+        PIPELINE_INITIALISATION.out.purity
     )
     //
     // SUBWORKFLOW: Run completion tasks

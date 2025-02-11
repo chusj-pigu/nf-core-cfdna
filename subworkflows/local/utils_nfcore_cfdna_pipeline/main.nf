@@ -70,28 +70,71 @@ workflow PIPELINE_INITIALISATION {
     Channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
         .map {
-            meta, fastq_1, fastq_2 ->
-                if (!fastq_2) {
-                    return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
-                } else {
-                    return [ meta.id, meta + [ single_end:false ], [ fastq_1, fastq_2 ] ]
-                }
+            meta, fastq, purity ->
+                tuple(meta.id,meta,fastq,purity)
         }
         .groupTuple()
         .map { samplesheet ->
             validateInputSamplesheet(samplesheet)
         }
         .map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
+            meta, fastqs, purity ->
+                tuple(meta,fastqs.flatten(),purity)
         }
         .set { ch_samplesheet }
 
+    // Make samplesheet without purity for first processes :
+    ch_samplesheet
+        .map { meta, fastq, purity ->
+            tuple(meta,fastq) }
+        .set { ch_samplesheet_red }
+
+
+    // Make a samplesheet with meta and purity:
+    ch_samplesheet
+        .map { meta, fastq, purity ->
+            tuple(meta,purity) }
+        .set { ch_samplesheet_purity }
+
     emit:
-    samplesheet = ch_samplesheet
+    //samplesheet = ch_samplesheet
+    fastq = ch_samplesheet_red
+    purity = ch_samplesheet_purity
     versions    = ch_versions
 }
 
+/*
+========================================================================================
+    SUBWORKFLOW TO INITIALISE PIPELINE CHANNELS - SCREENING
+========================================================================================
+*/
+
+workflow INITIALISATION_CHANNEL_CREATION {
+
+    main:
+
+    ch_max_len = Channel.empty()
+    ch_min_qual = Channel.empty()
+    ch_ref = Channel.empty()
+
+    // Max length
+    ch_max_len = Channel.value(params.max_length)
+    // Minimum read quality
+    ch_min_qual = Channel.value(params.qual)
+
+
+    // Library
+    if (params.ref) {
+        ch_ref = Channel.fromPath(params.ref)
+    } else {
+        error("Please provide a reference file for alignment")
+    }
+
+    emit:
+    max_len = ch_max_len
+    min_qual = ch_min_qual
+    ref = ch_ref
+}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     SUBWORKFLOW FOR PIPELINE COMPLETION
@@ -110,7 +153,7 @@ workflow PIPELINE_COMPLETION {
 
     main:
     summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-    
+
     //
     // Completion email and summary
     //
@@ -148,15 +191,15 @@ workflow PIPELINE_COMPLETION {
 // Validate channels from input samplesheet
 //
 def validateInputSamplesheet(input) {
-    def (metas, fastqs) = input[1..2]
+    def (metas, fastqs, purity) = input[1..3]
 
     // Check that multiple runs of the same sample are of the same datatype i.e. single-end / paired-end
-    def endedness_ok = metas.collect{ meta -> meta.single_end }.unique().size == 1
-    if (!endedness_ok) {
-        error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
-    }
+   // def endedness_ok = metas.collect{ meta -> meta.single_end }.unique().size == 1
+   // if (!endedness_ok) {
+   //     error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
+   // }
 
-    return [ metas[0], fastqs ]
+    return [ metas[0], fastqs, purity ]
 }
 //
 // Generate methods description for MultiQC
