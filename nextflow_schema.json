@@ -264,7 +264,7 @@
             "description": "Minimum MAPQ for IchorCNA",
             "default": 20
         },
-        "window_wig": {
+        "bin_size": {
             "type": "integer",
             "default": 500000,
             "description": "Bin size for IchorCNA"
